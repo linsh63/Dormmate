@@ -1,583 +1,571 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智享宿舍空间 - 数字化您的宿舍生活</title>
+    <title>Dormmate - 宿舍管理系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="publicItems.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #6e8efb 0%, #a777e3 100%);
-        }
-        .item-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        .memory-wall {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            grid-auto-rows: 200px;
-            grid-gap: 16px;
-            grid-auto-flow: dense;
-        }
-        .memory-item {
+        .dorm-card {
             transition: all 0.3s ease;
         }
-        .memory-item:hover {
-            transform: scale(1.03);
-            z-index: 10;
+        .dorm-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
-        .memory-item.wide {
-            grid-column: span 2;
+        .sidebar-item {
+            transition: all 0.2s ease;
         }
-        .memory-item.tall {
-            grid-row: span 2;
+        .sidebar-item:hover {
+            background-color: rgba(79, 70, 229, 0.1);
+            border-left: 3px solid #4f46e5;
         }
-        .file-item:hover {
-            background-color: #f8fafc;
+        .active-item {
+            background-color: rgba(79, 70, 229, 0.1);
+            border-left: 3px solid #4f46e5;
+            color: #4f46e5;
+        }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
         }
     </style>
 </head>
-<body class="bg-gray-50 font-sans">
-    <!-- Navigation -->
-    <nav class="gradient-bg text-white shadow-lg">
-        <div class="container mx-auto px-4 py-3">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-home text-2xl"></i>
-                    <span class="text-xl font-bold">智享宿舍空间</span>
+<body class="bg-gray-50">
+    <!-- Auth Modal -->
+    <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div class="flex justify-between items-center border-b px-6 py-4">
+                <h3 class="text-lg font-semibold text-gray-900">登录/注册</h3>
+                <button onclick="toggleAuthModal()" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-4">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="username">用户名</label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="username" type="text" placeholder="用户名">
                 </div>
-                <div class="hidden md:flex items-center space-x-6">
-                    <a href="#finance" class="hover:text-gray-200 transition">经费管理</a>
-                    <a href="#items" class="hover:text-gray-200 transition">物品清单</a>
-                    <a href="#files" class="hover:text-gray-200 transition">文件共享</a>
-                    <a href="#memories" class="hover:text-gray-200 transition">宿舍记忆</a>
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="password">密码</label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="password" type="password" placeholder="密码">
                 </div>
-                <div class="flex items-center space-x-4">
-                    <button class="bg-white text-indigo-600 px-4 py-2 rounded-full font-medium hover:bg-gray-100 transition">
+                <div class="flex items-center justify-between">
+                    <button onclick="login()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                         登录
                     </button>
-                    <button class="md:hidden text-white">
-                        <i class="fas fa-bars text-xl"></i>
+                    <button onclick="register()" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        注册
                     </button>
                 </div>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <!-- Hero Section -->
-    <header class="gradient-bg text-white py-20">
-        <div class="container mx-auto px-4 text-center">
-            <h1 class="text-4xl md:text-5xl font-bold mb-6">数字化您的宿舍生活</h1>
-            <p class="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">
-                智享宿舍空间帮助您管理宿舍经费、物品，保存珍贵记忆，让宿舍生活更美好
-            </p>
-            <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <button class="bg-white text-indigo-600 px-6 py-3 rounded-full font-bold hover:bg-gray-100 transition">
-                    立即加入
-                </button>
-                <button class="bg-transparent border-2 border-white px-6 py-3 rounded-full font-bold hover:bg-white hover:text-indigo-600 transition">
-                    了解更多
+    <!-- Create Dorm Modal -->
+    <div id="createDormModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div class="flex justify-between items-center border-b px-6 py-4">
+                <h3 class="text-lg font-semibold text-gray-900">创建新宿舍</h3>
+                <button onclick="toggleCreateDormModal()" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
-        </div>
-    </header>
-
-    <!-- Features Section -->
-    <section class="py-16 bg-white">
-        <div class="container mx-auto px-4">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-gray-800 mb-4">核心功能</h2>
-                <p class="text-gray-600 max-w-2xl mx-auto">
-                    专为宿舍成员设计的数字化解决方案，从实用管理到情感回顾
-                </p>
-            </div>
-
-            <!-- Finance Management -->
-            <div id="finance" class="mb-20">
-                <div class="flex flex-col md:flex-row items-center gap-8">
-                    <div class="md:w-1/2">
-                        <div class="bg-gradient-to-br from-blue-50 to-purple-50 p-8 rounded-2xl shadow-lg">
-                            <div class="flex items-center justify-between mb-6">
-                                <h3 class="text-xl font-bold text-gray-800">宿舍经费</h3>
-                                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">¥4,258.50</span>
-                            </div>
-                            <div class="space-y-4">
-                                <div class="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
-                                    <div>
-                                        <p class="font-medium text-gray-800">空调维修费</p>
-                                        <p class="text-sm text-gray-500">2023-05-15</p>
-                                    </div>
-                                    <span class="text-red-500 font-bold">-¥350.00</span>
-                                </div>
-                                <div class="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
-                                    <div>
-                                        <p class="font-medium text-gray-800">李四 缴纳</p>
-                                        <p class="text-sm text-gray-500">2023-05-10</p>
-                                    </div>
-                                    <span class="text-green-500 font-bold">+¥200.00</span>
-                                </div>
-                                <div class="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
-                                    <div>
-                                        <p class="font-medium text-gray-800">购买公用品</p>
-                                        <p class="text-sm text-gray-500">2023-05-08</p>
-                                    </div>
-                                    <span class="text-red-500 font-bold">-¥126.50</span>
-                                </div>
-                            </div>
-                            <div class="mt-6 flex justify-between">
-                                <button class="px-4 py-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition">完整记录</button>
-                                <div class="flex space-x-2">
-                                    <button class="px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition">申请支出</button>
-                                    <button class="px-4 py-2 bg-indigo-100 text-indigo-600 rounded-full hover:bg-indigo-200 transition">缴纳</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="md:w-1/2">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-4">集成化经费管理</h3>
-                        <p class="text-gray-600 mb-6">
-                            透明公正的宿舍经费账户，记录每一笔收支流水，支持多人协作管理。经费使用申请后自动扣除，保持账目清晰。
-                        </p>
-                        <ul class="space-y-3">
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">实时查看宿舍经费余额和流水</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">便捷发起经费使用申请</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">审批通过后自动扣除经费</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">支出自动关联物品采购</span>
-                            </li>
-                        </ul>
-                    </div>
+            <div class="px-6 py-4">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="dorm-name">宿舍名称</label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="dorm-name" type="text" placeholder="请输入宿舍名称">
+                    <p id="dorm-name-error" class="text-red-500 text-xs italic hidden">宿舍名称不能为空</p>
                 </div>
-            </div>
-
-            <!-- Items Management -->
-            <div id="items" class="mb-20">
-                <div class="flex flex-col md:flex-row-reverse items-center gap-8">
-                    <div class="md:w-1/2">
-                        <div class="bg-gradient-to-br from-green-50 to-blue-50 p-6 rounded-2xl shadow-lg">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-xl font-bold text-gray-800">公共物品清单</h3>
-                                <button class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium hover:bg-green-200 transition">
-                                    + 添加物品
-                                </button>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="item-card bg-white p-4 rounded-lg shadow-sm transition cursor-pointer">
-                                    <div class="flex items-start mb-3">
-                                        <div class="mr-4">
-                                            <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                                                <i class="fas fa-blender text-gray-400 text-2xl"></i>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold text-gray-800">电饭煲</h4>
-                                            <p class="text-sm text-gray-500">状态: <span class="text-green-500">良好</span></p>
-                                            <p class="text-sm text-gray-500">位置: 公共区</p>
-                                            <p class="text-sm text-gray-500">采购: 2022-09-05</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-xs px-2 py-1 bg-gray-100 rounded">¥299.00</span>
-                                        <button class="text-xs text-indigo-600 hover:text-indigo-800">查看详情</button>
-                                    </div>
-                                </div>
-                                <div class="item-card bg-white p-4 rounded-lg shadow-sm transition cursor-pointer">
-                                    <div class="flex items-start mb-3">
-                                        <div class="mr-4">
-                                            <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                                                <i class="fas fa-toilet-paper text-gray-400 text-2xl"></i>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold text-gray-800">卫生纸</h4>
-                                            <p class="text-sm text-gray-500">状态: <span class="text-yellow-500">低库存</span></p>
-                                            <p class="text-sm text-gray-500">位置: 洗手间柜</p>
-                                            <p class="text-sm text-gray-500">采购: 2023-04-18</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-xs px-2 py-1 bg-gray-100 rounded">¥32.00</span>
-                                        <button class="text-xs text-indigo-600 hover:text-indigo-800">申请采购</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="md:w-1/2">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-4">智能物品管理</h3>
-                        <p class="text-gray-600 mb-6">
-                            详细记录公共物品状态、位置和采购信息，智能提醒库存情况，一键发起关联采购申请。
-                        </p>
-                        <ul class="space-y-3">
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">完整记录物品状态、位置和购买信息</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">低库存自动提醒并快速发起采购申请</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">采购后自动更新记录并扣除经费</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">上传物品照片建立完整档案</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- File Sharing -->
-            <div id="files" class="mb-20">
-                <div class="flex flex-col md:flex-row items-center gap-8">
-                    <div class="md:w-1/2">
-                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-2xl shadow-lg">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-xl font-bold text-gray-800">宿舍文件共享</h3>
-                                <button class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium hover:bg-purple-200 transition flex items-center">
-                                    <i class="fas fa-plus mr-1"></i> 上传文件
-                                </button>
-                            </div>
-                            <div class="space-y-3">
-                                <div class="file-item bg-white p-3 rounded-lg shadow-sm hover:bg-gray-50 transition cursor-pointer flex items-center">
-                                    <div class="mr-3 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-500">
-                                        <i class="fas fa-file-pdf text-xl"></i>
-                                    </div>
-                                    <div class="flex-1 truncate">
-                                        <h4 class="font-medium text-gray-800 truncate">宿舍公约2023版.pdf</h4>
-                                        <p class="text-xs text-gray-500">上传: 张三 • 2023-02-10 • 256KB</p>
-                                    </div>
-                                    <div class="ml-2">
-                                        <i class="fas fa-ellipsis-v text-gray-400 hover:text-gray-600"></i>
-                                    </div>
-                                </div>
-                                <div class="file-item bg-white p-3 rounded-lg shadow-sm hover:bg-gray-50 transition cursor-pointer flex items-center">
-                                    <div class="mr-3 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-green-500">
-                                        <i class="fas fa-file-word text-xl"></i>
-                                    </div>
-                                    <div class="flex-1 truncate">
-                                        <h4 class="font-medium text-gray-800 truncate">课程作业参考.docx</h4>
-                                        <p class="text-xs text-gray-500">上传: 李四 • 2023-03-15 • 1.2MB</p>
-                                    </div>
-                                    <div class="ml-2">
-                                        <i class="fas fa-ellipsis-v text-gray-400 hover:text-gray-600"></i>
-                                    </div>
-                                </div>
-                                <div class="file-item bg-white p-3 rounded-lg shadow-sm hover:bg-gray-50 transition cursor-pointer flex items-center">
-                                    <div class="mr-3 w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center text-yellow-500">
-                                        <i class="fas fa-images text-xl"></i>
-                                    </div>
-                                    <div class="flex-1 truncate">
-                                        <h4 class="font-medium text-gray-800 truncate">宿舍装修灵感</h4>
-                                        <p class="text-xs text-gray-500">上传: 王五 • 2023-04-22 • 15MB</p>
-                                    </div>
-                                    <div class="ml-2">
-                                        <i class="fas fa-ellipsis-v text-gray-400 hover:text-gray-600"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="md:w-1/2">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-4">专属文件共享</h3>
-                        <p class="text-gray-600 mb-6">
-                            宿舍成员的专属安全文件存储空间，便捷分享学习资料、生活记录和重要文档，构建内部知识库。
-                        </p>
-                        <ul class="space-y-3">
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">安全存储和管理各类宿舍文件</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">支持多种文件类型上传和下载</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">自定义文件夹分类整理</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">权限管理保障文件安全</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Memories Section -->
-            <div id="memories">
-                <div class="flex flex-col md:flex-row-reverse items-center gap-8">
-                    <div class="md:w-1/2">
-                        <div class="p-4 rounded-2xl">
-                            <div class="memory-wall">
-                                <div class="memory-item rounded-lg overflow-hidden">
-                                    <img src="https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" 
-                                         alt="宿舍照片" class="w-full h-full object-cover">
-                                </div>
-                                <div class="memory-item rounded-lg overflow-hidden">
-                                    <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" 
-                                         alt="宿舍照片" class="w-full h-full object-cover">
-                                </div>
-                                <div class="memory-item wide rounded-lg overflow-hidden">
-                                    <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" 
-                                         alt="宿舍照片" class="w-full h-full object-cover">
-                                </div>
-                                <div class="memory-item tall rounded-lg overflow-hidden relative">
-                                    <img src="https://images.unsplash.com/photo-1528728329032-2972f654df51?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" 
-                                         alt="宿舍照片" class="w-full h-full object-cover">
-                                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 text-white">
-                                        <p class="font-medium">去年生日聚会</p>
-                                        <p class="text-xs">2022-11-05</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="md:w-1/2">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-4">珍存宿舍记忆</h3>
-                        <p class="text-gray-600 mb-6">
-                            用照片和视频记录宿舍生活的点点滴滴，毕业后生成专属毕业快照，永久珍藏这段美好时光。
-                        </p>
-                        <ul class="space-y-3">
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">上传宿舍布局、装饰和生活照片</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">可视化展示宿舍影像集/照片墙</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">毕业时生成只读"毕业快照"</span>
-                            </li>
-                            <li class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                                <span class="text-gray-700">毕业后随时虚拟"故地重游"</span>
-                            </li>
-                        </ul>
-                        <div class="mt-8">
-                            <button class="px-5 py-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition flex items-center">
-                                <i class="fas fa-camera mr-2"></i> 上传记忆照片
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials -->
-    <section class="py-16 bg-gray-50">
-        <div class="container mx-auto px-4">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-gray-800 mb-4">用户评价</h2>
-                <p class="text-gray-600 max-w-2xl mx-auto">
-                    看看我们的用户是如何评价智享宿舍空间的
-                </p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="bg-white p-8 rounded-xl shadow-md">
-                    <div class="flex items-center mb-4">
-                        <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-4">
-                            <i class="fas fa-user text-xl"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-gray-800">李明</h4>
-                            <p class="text-sm text-gray-500">2018级毕业生</p>
-                        </div>
-                    </div>
-                    <p class="text-gray-600">
-                        "毕业后还能看到当年宿舍的样子，看到和室友们的点点滴滴，这种感觉真的太好了！"
-                    </p>
-                    <div class="mt-4 flex">
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                    </div>
-                </div>
-                <div class="bg-white p-8 rounded-xl shadow-md">
-                    <div class="flex items-center mb-4">
-                        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-4">
-                            <i class="fas fa-user text-xl"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-gray-800">张小红</h4>
-                            <p class="text-sm text-gray-500">2020级在读</p>
-                        </div>
-                    </div>
-                    <p class="text-gray-600">
-                        "再也没有为宿舍经费分配或物品损坏争吵过了，一切账目清晰可见，解决问题透明公正。"
-                    </p>
-                    <div class="mt-4 flex">
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star-half-alt text-yellow-400"></i>
-                    </div>
-                </div>
-                <div class="bg-white p-8 rounded-xl shadow-md">
-                    <div class="flex items-center mb-4">
-                        <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-4">
-                            <i class="fas fa-user text-xl"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-gray-800">王磊</h4>
-                            <p class="text-sm text-gray-500">2021级在读</p>
-                        </div>
-                    </div>
-                    <p class="text-gray-600">
-                        "宿舍共享文件功能太实用了！学习资料、课程作业一键分享，再也不用担心丢资料了。"
-                    </p>
-                    <div class="mt-4 flex">
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                        <i class="fas fa-star text-yellow-400"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="py-16 gradient-bg text-white">
-        <div class="container mx-auto px-4 text-center">
-            <h2 class="text-3xl md:text-4xl font-bold mb-6">开始数字化您的宿舍生活</h2>
-            <p class="text-xl mb-8 max-w-2xl mx-auto">
-                智享宿舍空间，让宿舍管理更轻松，让共同记忆更珍贵
-            </p>
-            <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <button class="bg-white text-indigo-600 px-8 py-4 rounded-full font-bold hover:bg-gray-100 transition shadow-lg">
-                    立即注册
-                </button>
-                <button class="bg-transparent border-2 border-white px-8 py-4 rounded-full font-bold hover:bg-white hover:text-indigo-600 transition shadow-lg">
-                    了解更多
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-gray-300 py-12">
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div>
-                    <h3 class="text-white text-lg font-bold mb-4 flex items-center">
-                        <i class="fas fa-home mr-2"></i> 智享宿舍空间
-                    </h3>
-                    <p class="mb-4">
-                        专注于单宿舍数字化的解决方案，融合实用管理与情感回顾价值。
-                    </p>
-                    <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-white">
-                            <i class="fab fa-weixin text-xl"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white">
-                            <i class="fab fa-weibo text-xl"></i>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-white">
-                            <i class="fab fa-qq text-xl"></i>
-                        </a>
-                    </div>
-                </div>
-                <div>
-                    <h3 class="text-white text-lg font-bold mb-4">产品功能</h3>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="hover:text-white transition">经费管理</a></li>
-                        <li><a href="#" class="hover:text-white transition">物品清单</a></li>
-                        <li><a href="#" class="hover:text-white transition">文件共享</a></li>
-                        <li><a href="#" class="hover:text-white transition">宿舍记忆</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-white text-lg font-bold mb-4">联系我们</h3>
-                    <ul class="space-y-2">
-                        <li class="flex items-center">
-                            <i class="fas fa-envelope mr-2"></i>
-                            <span>contact@zhixiangdorm.com</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-phone-alt mr-2"></i>
-                            <span>400-123-4567</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-map-marker-alt mr-2"></i>
-                            <span>北京市海淀区中关村大厦15层</span>
-                        </li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-white text-lg font-bold mb-4">关于我们</h3>
-                    <p class="mb-4">
-                        我们致力于通过技术改善宿舍生活体验，让每一段宿舍时光都值得珍存。
-                    </p>
-                    <button class="px-4 py-2 border border-gray-400 rounded-md hover:bg-gray-700 transition text-sm">
-                        加入团队
+                <div class="flex items-center justify-end">
+                    <button onclick="toggleCreateDormModal()" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
+                        取消
+                    </button>
+                    <button onclick="createDorm()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        创建
                     </button>
                 </div>
             </div>
-            <div class="border-t border-gray-700 mt-12 pt-8 text-center text-sm">
-                <p>© 2023 智享宿舍空间 版权所有</p>
-                <div class="flex justify-center space-x-6 mt-4">
-                    <a href="#" class="hover:text-white">隐私政策</a>
-                    <a href="#" class="hover:text-white">服务条款</a>
-                    <a href="#" class="hover:text-white">帮助中心</a>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="hidden md:flex md:flex-shrink-0">
+            <div class="flex flex-col w-64 bg-white border-r">
+                <div class="h-16 flex items-center px-4 border-b">
+                    <div class="flex items-center">
+                        <i class="fas fa-home text-indigo-600 text-xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-800">Dormmate</span>
+                    </div>
+                </div>
+                <div class="flex flex-col flex-grow px-4 py-4 border-b">
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">我的宿舍</h3>
+                    <div id="dorm-list" class="space-y-1">
+                        <!-- Dorms will be added here dynamically -->
+                    </div>
+                    <button onclick="toggleCreateDormModal()" class="mt-2 flex items-center px-2 py-2 text-sm text-indigo-600 rounded-md hover:bg-indigo-50">
+                        <i class="fas fa-plus-circle mr-2"></i>
+                        <span>创建新宿舍</span>
+                    </button>
+                    <button onclick="showJoinDormModal()" class="mt-1 flex items-center px-2 py-2 text-sm text-indigo-600 rounded-md hover:bg-indigo-50">
+                        <i class="fas fa-search mr-2"></i>
+                        <span>加入宿舍</span>
+                    </button>
+                </div>
+                <div class="flex flex-col flex-grow px-4 py-4 border-b">
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">个人中心</h3>
+                    <button id="profileBtn" onclick="showProfile()" class="flex items-center px-2 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 sidebar-item">
+                        <i class="fas fa-user mr-2"></i>
+                        <span>个人资料</span>
+                    </button>
+                    <button onclick="logout()" class="mt-1 flex items-center px-2 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 sidebar-item">
+                        <i class="fas fa-sign-out-alt mr-2"></i>
+                        <span>退出登录</span>
+                    </button>
                 </div>
             </div>
         </div>
-    </footer>
 
-    <script>
-        // Simple JavaScript for demonstration purposes
-        document.addEventListener('DOMContentLoaded', function() {
-            // Smooth scrolling for anchor links
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
+        <!-- Mobile sidebar -->
+        <div id="mobileSidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white transform -translate-x-full transition-transform duration-300 ease-in-out md:hidden">
+            <div class="h-16 flex items-center px-4 border-b">
+                <div class="flex items-center">
+                    <i class="fas fa-home text-indigo-600 text-xl mr-2"></i>
+                    <span class="text-xl font-bold text-gray-800">Dormmate</span>
+                </div>
+            </div>
+            <div class="flex flex-col flex-grow px-4 py-4 border-b">
+                <button onclick="hideMobileSidebar()" class="absolute top-4 right-4 p-1 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">我的宿舍</h3>
+                <div id="mobile-dorm-list" class="space-y-1">
+                    <!-- Dorms will be added here dynamically -->
+                </div>
+                <button onclick="toggleCreateDormModal(); hideMobileSidebar()" class="mt-2 flex items-center px-2 py-2 text-sm text-indigo-600 rounded-md hover:bg-indigo-50">
+                    <i class="fas fa-plus-circle mr-2"></i>
+                    <span>创建新宿舍</span>
+                </button>
+                <button onclick="showJoinDormModal(); hideMobileSidebar()" class="mt-1 flex items-center px-2 py-2 text-sm text-indigo-600 rounded-md hover:bg-indigo-50">
+                    <i class="fas fa-search mr-2"></i>
+                    <span>加入宿舍</span>
+                </button>
+            </div>
+            <div class="flex flex-col flex-grow px-4 py-4 border-b">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">个人中心</h3>
+                <button onclick="showProfile(); hideMobileSidebar()" class="flex items-center px-2 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 sidebar-item">
+                    <i class="fas fa-user mr-2"></i>
+                    <span>个人资料</span>
+                </button>
+                <button onclick="logout(); hideMobileSidebar()" class="mt-1 flex items-center px-2 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 sidebar-item">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    <span>退出登录</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex flex-col flex-1 overflow-hidden">
+            <!-- Top Navigation -->
+            <div class="h-16 flex items-center justify-between px-4 bg-white border-b">
+                <div class="flex items-center md:hidden">
+                    <button onclick="showMobileSidebar()" class="p-2 rounded-md text-gray-500 hover:bg-gray-100 focus:outline-none">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="flex items-center ml-2">
+                        <i class="fas fa-home text-indigo-600 text-xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-800">Dormmate</span>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="relative">
+                        <button onclick="toggleAccountDropdown()" class="flex items-center focus:outline-none">
+                            <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                                <i class="fas fa-user text-indigo-600"></i>
+                            </div>
+                            <span class="ml-2 hidden md:inline" id="username-display">未登录</span>
+                            <i class="fas fa-chevron-down ml-1 hidden md:inline text-gray-400"></i>
+                        </button>
+                        <div id="accountDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden">
+                            <a id="profile-link" onclick="showProfile()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-center">个人资料</a>
+                            <a id="logout-link" onclick="logout()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-center">退出登录</a>
+                            <a id="login-link" onclick="toggleAuthModal()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-center">登录</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="flex-1 overflow-auto p-4" id="main-content">
+                <div id="home-view" class="space-y-6">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">欢迎使用 Dormmate</h2>
+                        <p class="text-gray-600 mb-4">Dormmate 是一个宿舍管理系统，帮助你和你的室友更好地管理宿舍生活。</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="flex items-center p-4 bg-indigo-50 rounded-lg">
+                                <div class="p-3 rounded-full bg-indigo-100 mr-4">
+                                    <i class="fas fa-home text-indigo-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">宿舍管理</h3>
+                                    <p class="text-sm text-gray-600">创建或加入多个宿舍</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-4 bg-green-50 rounded-lg">
+                                <div class="p-3 rounded-full bg-green-100 mr-4">
+                                    <i class="fas fa-hand-holding-usd text-green-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">经费管理</h3>
+                                    <p class="text-sm text-gray-600">跟踪和审批公共费用</p>
+                                </div>
+                            </div>
+                            <!-- 新增功能图标：公物管理 -->
+                            <div class="flex items-center p-4 bg-blue-50 rounded-lg">
+                                <div class="p-3 rounded-full bg-blue-100 mr-4">
+                                    <i class="fas fa-couch text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">公物管理</h3>
+                                    <p class="text-sm text-gray-600">管理宿舍公共物品</p>
+                                </div>
+                            </div>
+                            <!-- 新增功能图标：共享文件夹 -->
+                            <div class="flex items-center p-4 bg-purple-50 rounded-lg">
+                                <div class="p-3 rounded-full bg-purple-100 mr-4">
+                                    <i class="fas fa-folder-open text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">共享文件夹</h3>
+                                    <p class="text-sm text-gray-600">分享和管理宿舍文件</p>
+                                </div>
+                            </div>
+                            <!-- 新增功能图标：生活记录 -->
+                            <div class="flex items-center p-4 bg-yellow-50 rounded-lg">
+                                <div class="p-3 rounded-full bg-yellow-100 mr-4">
+                                    <i class="fas fa-book text-yellow-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">生活记录</h3>
+                                    <p class="text-sm text-gray-600">记录宿舍生活点滴</p>
+                                </div>
+                            </div>
+                            <!-- 新增功能图标：场景重建 -->
+                            <div class="flex items-center p-4 bg-red-50 rounded-lg">
+                                <div class="p-3 rounded-full bg-red-100 mr-4">
+                                    <i class="fas fa-cube text-red-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">场景重建</h3>
+                                    <p class="text-sm text-gray-600">3D可视化宿舍布局</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="my-dorms" class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-gray-800">我的宿舍</h2>
+                            <div class="flex space-x-2">
+                                <button onclick="toggleCreateDormModal()" class="flex items-center px-3 py-1 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+                                    <i class="fas fa-plus mr-1"></i>
+                                    <span>创建</span>
+                                </button>
+                                <button onclick="showJoinDormModal()" class="flex items-center px-3 py-1 text-sm text-indigo-600 border border-indigo-600 rounded-md hover:bg-indigo-50">
+                                    <i class="fas fa-search mr-1"></i>
+                                    <span>加入</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="dorms-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Dorms will be added here dynamically -->
+                            <p id="no-dorms-message" class="text-gray-500">你还没有加入任何宿舍，点击"创建"或"加入"按钮开始使用。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dorm Management View (hidden by default) -->
+                <div id="dorm-management-view" class="hidden">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <!-- 在宿舍管理视图的顶部按钮区域添加设置昵称按钮 -->
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="flex items-center">
+                                <button onclick="showHomeView()" class="mr-3 p-2 rounded-md hover:bg-gray-100">
+                                    <i class="fas fa-arrow-left text-gray-600"></i>
+                                </button>
+                                <h2 id="dorm-name-heading" class="text-2xl font-bold text-gray-800">宿舍名称</h2>
+                                <span id="dorm-role-badge" class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"></span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button id="nickname-btn" onclick="showNicknameModal()" class="flex items-center px-3 py-1 text-sm text-indigo-600 border border-indigo-600 rounded-md hover:bg-indigo-50">
+                                    <i class="fas fa-user-tag mr-1"></i>
+                                    <span>设置昵称</span>
+                                </button>
+                                <button id="invite-btn" onclick="showInviteModal()" class="flex items-center px-3 py-1 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+                                    <i class="fas fa-user-plus mr-1"></i>
+                                    <span>邀请</span>
+                                </button>
+                                <button id="members-btn" onclick="showMembersList()" class="flex items-center px-3 py-1 text-sm text-indigo-600 border border-indigo-600 rounded-md hover:bg-indigo-50">
+                                    <i class="fas fa-users mr-1"></i>
+                                    <span>成员</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="dorm-tabs" class="border-b border-gray-200">
+                            <div class="flex space-x-8">
+                                <button onclick="showDormTab('funds')" class="pb-4 px-1 border-b-2 font-medium text-sm tab-btn active-tab" data-tab="funds">
+                                    经费管理
+                                </button>
+                                <button onclick="showDormTab('requests')" class="pb-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 tab-btn" data-tab="requests">
+                                    申请审批
+                                </button>
+                                <!-- 添加公物管理标签页按钮 -->
+                                <button onclick="showDormTab('public-items'); showPublicItemsTab();" class="pb-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 tab-btn" data-tab="public-items">
+                                    公物管理
+                                </button>
+                                <!-- 添加共享文件夹标签页按钮 -->
+                                <button onclick="showDormTab('shared-files'); showSharedFilesTab();" class="pb-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 tab-btn" data-tab="shared-files">
+                                    共享文件夹
+                                </button>
+                                <button onclick="showDormTab('settings')" id="settings-tab" class="pb-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 tab-btn hidden" data-tab="settings">
+                                    宿舍设置
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Funds Tab -->
+                        <div id="funds-tab" class="mt-6">
+                            <div class="bg-indigo-50 rounded-lg p-6 mb-6">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-800">公共经费</h3>
+                                        <p class="text-gray-600">宿舍的公共资金池</p>
+                                    </div>
+                                    <div>
+                                        <p id="current-funds" class="text-3xl font-bold text-indigo-600">¥0.00</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-lg border p-4 mb-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">经费操作</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <button onclick="showContributeModal()" class="flex flex-col items-center p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
+                                        <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mb-2">
+                                            <i class="fas fa-hand-holding-usd text-indigo-600"></i>
+                                        </div>
+                                        <span class="font-medium text-gray-800">缴纳经费</span>
+                                        <span class="text-xs text-gray-500">为公共经费做贡献</span>
+                                    </button>
+                                    <button onclick="showRequestModal()" class="flex flex-col items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                                        <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-2">
+                                            <i class="fas fa-shopping-cart text-green-600"></i>
+                                        </div>
+                                        <span class="font-medium text-gray-800">申请使用</span>
+                                        <span class="text-xs text-gray-500">申请使用公共经费</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-lg border p-4">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-800">经费历史</h3>
+                                    <div class="relative">
+                                        <button onclick="toggleFundsHistoryFilter()" class="flex items-center px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50">
+                                            <span id="funds-filter-text">全部</span>
+                                            <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                                        </button>
+                                        <div id="funds-history-filter" class="absolute right-0 mt-1 w-40 bg-white rounded-md shadow-lg py-1 z-10 hidden border">
+                                            <a onclick="filterFundsHistory('all')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">全部</a>
+                                            <a onclick="filterFundsHistory('contribution')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">缴纳</a>
+                                            <a onclick="filterFundsHistory('request')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">使用申请</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <ul id="funds-history-list" class="divide-y divide-gray-200">
+                                    <!-- Funds history items will be added here dynamically -->
+                                    <li class="py-4">
+                                        <p class="text-gray-500 text-center">暂无经费记录</p>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Requests Tab -->
+                        <div id="requests-tab" class="mt-6 hidden">
+                            <div class="bg-white rounded-lg border p-4 mb-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">待审批申请</h3>
+                                <div id="pending-requests-list">
+                                    <!-- Pending requests will be added here dynamically -->
+                                    <p class="text-gray-500 text-center py-8">当前没有待审批的申请</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-lg border p-4">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-800">申请历史</h3>
+                                    <div class="flex items-center">
+                                        <div class="relative">
+                                            <button onclick="toggleRequestsHistoryFilter()" class="flex items-center px-3 py-1 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50">
+                                                <span id="requests-filter-text">全部</span>
+                                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                                            </button>
+                                            <div id="requests-history-filter" class="absolute right-0 mt-1 w-40 bg-white rounded-md shadow-lg py-1 z-10 hidden border">
+                                                <a onclick="filterRequestsHistory('all')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">全部</a>
+                                                <a onclick="filterRequestsHistory('approved')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">已批准</a>
+                                                <a onclick="filterRequestsHistory('rejected')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">已拒绝</a>
+                                                <a onclick="filterRequestsHistory('pending')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">待处理</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <ul id="requests-history-list" class="divide-y divide-gray-200">
+                                    <!-- Requests history will be added here dynamically -->
+                                    <li class="py-4">
+                                        <p class="text-gray-500 text-center">暂无申请记录</p>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 添加公物管理标签页内容 -->
+                        <div id="public-items-tab" class="mt-6 hidden">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-lg font-medium text-gray-900">公共物品</h3>
+                                <button onclick="showAddItemModal()" class="flex items-center px-3 py-1 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+                                    <i class="fas fa-plus mr-1"></i>
+                                    <span>添加物品</span>
+                                </button>
+                            </div>
+                            <div id="public-items-list" class="space-y-4">
+                                <!-- 公物列表将在这里动态生成 -->
+                            </div>
+                        </div>
+                        
+                        <!-- 添加共享文件夹标签页内容 -->
+                        <div id="shared-files-tab" class="mt-6 hidden">
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">共享文件夹</h3>
+                                
+                                <!-- 面包屑导航 -->
+                                <div id="file-breadcrumbs" class="flex items-center text-sm mb-4 overflow-x-auto whitespace-nowrap"></div>
+                                
+                                <!-- 文件列表容器 -->
+                                <div id="shared-files-container" class="mt-4"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Settings Tab -->
+                        <div id="settings-tab" class="mt-6 hidden">
+                            <div class="bg-white rounded-lg border p-4 mb-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">宿舍信息</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">宿舍名称</label>
+                                        <input id="dorm-name-input" type="text" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">宿舍ID</label>
+                                        <input id="dorm-id-input" type="text" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 bg-gray-100 focus:outline-none" readonly>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <button onclick="updateDormInfo()" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                            保存更改
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile View -->
+                <div id="profile-view" class="hidden bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">个人资料</h2>
+                        <button onclick="showHomeView()" class="p-2 rounded-md hover:bg-gray-100">
+                            <i class="fas fa-arrow-left text-gray-600"></i>
+                        </button>
+                    </div>
                     
-                    document.querySelector(this.getAttribute('href')).scrollIntoView({
-                        behavior: 'smooth'
-                    });
-                });
-            });
-            
-            // Memory wall item click handler
-            document.querySelectorAll('.memory-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    alert('照片详情展示功能即将开放！');
-                });
-            });
-            
-            // File item click handler
-            document.querySelectorAll('.file-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    if (!e.target.closest('.fa-ellipsis-v')) {
-                        alert('文件预览功能即将开放！');
-                    }
-                });
-            });
-        });
-    </script>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-1">
+                            <div class="flex flex-col items-center">
+                                <div class="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center mb-4">
+                                    <i class="fas fa-user text-gray-400 text-4xl"></i>
+                                </div>
+                                <h3 id="profile-username" class="text-xl font-semibold text-gray-800">用户名</h3>
+                                <p class="text-gray-600">注册用户</p>
+                            </div>
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <div class="bg-white rounded-lg border p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-6">基本信息</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                                        <input id="profile-username-input" type="text" class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="用户名">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+                                        <input id="profile-email-input" type="email" class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="邮箱">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
+                                        <input id="profile-password-input" type="password" class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="新密码">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">确认密码</label>
+                                        <input id="profile-confirm-password-input" type="password" class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="确认密码">
+                                    </div>
+                                </div>
+                                <div class="mt-6 flex justify-end">
+                                    <button onclick="updateProfile()" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        保存更改
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 在其他模态框后面添加设置昵称的模态框 -->
+    <div id="nicknameModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-overlay">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div class="flex justify-between items-center border-b px-6 py-4">
+                <h3 class="text-lg font-semibold text-gray-900">设置宿舍昵称</h3>
+                <button onclick="toggleNicknameModal()" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-4">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="nickname-input">在当前宿舍中的昵称</label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="nickname-input" type="text" placeholder="请输入昵称">
+                    <p id="nickname-error" class="text-red-500 text-xs italic hidden">昵称不能为空</p>
+                </div>
+                <div class="flex items-center justify-end">
+                    <button onclick="toggleNicknameModal()" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
+                        取消
+                    </button>
+                    <button onclick="updateNickname()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="dormmate.js"></script>
+    <script src="publicItems.js"></script>
+    <script src="sharedFiles.js"></script>
 </body>
 </html>
