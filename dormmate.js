@@ -348,57 +348,35 @@ function showDormView(dormId) {
     }
 }
 
+// 显示宿舍标签页
 function showDormTab(tabName) {
-    // 隐藏所有标签页内容
-    document.getElementById('funds-tab').classList.add('hidden');
-    document.getElementById('requests-tab').classList.add('hidden');
-    document.getElementById('settings-tab').classList.add('hidden');
+    // 隐藏所有标签页
+    document.querySelectorAll('[id$="-tab"]').forEach(tab => {
+        tab.classList.add('hidden');
+    });
     
-    // 添加公物管理标签页
-    const publicItemsTab = document.getElementById('public-items-tab');
-    if (publicItemsTab) {
-        publicItemsTab.classList.add('hidden');
-    }
-    
-    // 添加共享文件夹标签页
-    const sharedFilesTab = document.getElementById('shared-files-tab');
-    if (sharedFilesTab) {
-        sharedFilesTab.classList.add('hidden');
-    }
-    
-    // 移除所有标签页的激活状态
+    // 移除所有标签按钮的活动状态
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active-tab', 'border-indigo-500', 'text-indigo-600');
         btn.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
     });
     
-    // 显示选中的标签页内容
+    // 显示选中的标签页
     const selectedTab = document.getElementById(`${tabName}-tab`);
     if (selectedTab) {
         selectedTab.classList.remove('hidden');
     }
     
-    // 激活选中的标签
-    const activeTab = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
-    if (activeTab) {
-        activeTab.classList.add('active-tab', 'border-indigo-500', 'text-indigo-600');
-        activeTab.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+    // 设置选中标签按钮的活动状态
+    const selectedBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+    if (selectedBtn) {
+        selectedBtn.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+        selectedBtn.classList.add('active-tab', 'border-indigo-500', 'text-indigo-600');
     }
     
-    // 如果显示设置标签页，填充宿舍信息
-    if (tabName === 'settings' && currentDorm) {
-        document.getElementById('dorm-name-input').value = currentDorm.name;
-        document.getElementById('dorm-id-input').value = currentDorm.id;
-    }
-    
-    // 如果显示公物管理标签页，初始化公物管理系统
-    if (tabName === 'public-items' && typeof showPublicItemsTab === 'function') {
+    // 如果是公物管理标签页，初始化公物管理系统
+    if (tabName === 'public-items') {
         showPublicItemsTab();
-    }
-    
-    // 如果显示共享文件夹标签页，初始化共享文件夹系统
-    if (tabName === 'shared-files' && typeof showSharedFilesTab === 'function') {
-        showSharedFilesTab();
     }
 }
 
@@ -1211,7 +1189,6 @@ function finishSubmitRequest(request) {
 }
 
 // 显示物品详情模态框
-// 显示物品详情模态框
 function showItemDetails(itemId) {
     if (!currentDorm || !currentDorm.publicItems) return;
     
@@ -1279,10 +1256,10 @@ function showItemDetails(itemId) {
                 ${photoHTML}
                 <div class="mt-6 flex justify-between">
                     <div>
+                        ${currentDorm.isAdmin ? `
                         <button onclick="showUpdateItemModal('${item.id}')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
                             <i class="fas fa-edit mr-1"></i> 编辑物品
                         </button>
-                        ${currentDorm.isAdmin ? `
                         <button onclick="confirmDeleteItem('${item.id}')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                             <i class="fas fa-trash-alt mr-1"></i> 删除
                         </button>
@@ -1481,31 +1458,33 @@ function deleteItem(itemId) {
     alert('物品已删除');
 }
 
-// 显示全屏大图
-function showFullSizeImage(imageUrl, imageName) {
-    // 创建全屏模态框
+// 显示全尺寸图片
+function showFullSizeImage(imageUrl, title) {
+    if (!imageUrl) return;
+    
+    // 创建模态框
     const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90';
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-overlay';
     modal.id = 'fullSizeImageModal';
     
     modal.innerHTML = `
-        <div class="relative w-full h-full flex items-center justify-center">
-            <button onclick="closeModal('fullSizeImageModal')" class="absolute top-4 right-4 text-white text-2xl">
-                <i class="fas fa-times"></i>
-            </button>
-            <div class="text-center">
-                <img src="${imageUrl}" alt="${imageName}" class="max-w-full max-h-[80vh] object-contain">
-                <p class="text-white mt-2">${imageName}</p>
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+            <div class="flex justify-between items-center border-b px-6 py-4">
+                <h3 class="text-lg font-semibold text-gray-900">${title || '查看图片'}</h3>
+                <button onclick="closeModal('fullSizeImageModal')" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-4 flex justify-center">
+                <img src="${imageUrl}" alt="${title || '图片'}" class="max-w-full max-h-[70vh] object-contain">
+            </div>
+            <div class="px-6 py-3 border-t flex justify-end">
+                <button onclick="closeModal('fullSizeImageModal')" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    关闭
+                </button>
             </div>
         </div>
     `;
-    
-    // 点击背景关闭
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            closeModal('fullSizeImageModal');
-        }
-    });
     
     document.body.appendChild(modal);
 }

@@ -30,7 +30,8 @@ function renderPublicItemsList() {
     
     currentPublicItems.forEach(item => {
         const itemCard = document.createElement('div');
-        itemCard.className = 'bg-white rounded-lg border p-4 mb-4';
+        itemCard.className = 'bg-white rounded-lg border p-4 mb-4 cursor-pointer hover:shadow-md transition-shadow';
+        itemCard.onclick = () => showItemDetails(item.id);
         
         // 状态文本和颜色
         let statusText = '未知';
@@ -74,16 +75,11 @@ function renderPublicItemsList() {
                         <p class="text-sm text-gray-600">购买日期: ${formatDate(item.purchaseDate)}</p>
                     </div>
                 </div>
-                ${currentDorm && currentDorm.isAdmin ? `
-                <div class="flex space-x-2">
-                    <button onclick="showEditItemModal('${item.id}')" class="p-1 text-blue-600 hover:text-blue-800">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button onclick="deletePublicItem('${item.id}')" class="p-1 text-red-600 hover:text-red-800">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                <div>
+                    <span class="text-sm text-blue-600">
+                        <i class="fas fa-info-circle"></i> 查看详情
+                    </span>
                 </div>
-                ` : ''}
             </div>
         `;
         
@@ -359,10 +355,28 @@ function deletePublicItem(itemId) {
     currentPublicItems.splice(itemIndex, 1);
     currentDorm.publicItems = currentPublicItems;
     
+    // 更新全局数据 (确保 dorms 和 mockDorms 在全局范围内可访问)
+    if (typeof dorms !== 'undefined') {
+        const dormIndex = dorms.findIndex(d => d.id === currentDorm.id);
+        if (dormIndex !== -1) {
+            dorms[dormIndex].publicItems = currentPublicItems;
+        }
+    }
+    
+    if (typeof mockDorms !== 'undefined') {
+        const mockDormIndex = mockDorms.findIndex(d => d.id === currentDorm.id);
+        if (mockDormIndex !== -1) {
+            mockDorms[mockDormIndex].publicItems = currentPublicItems;
+        }
+    }
+    
+    // 关闭模态框
+    closeModal('itemDetailsModal');
+    
     // 更新UI
     renderPublicItemsList();
     
-    alert('公共物品已删除');
+    alert('物品已删除');
 }
 
 // 在宿舍视图中显示公物标签页
@@ -579,4 +593,170 @@ function completeAddItem(item) {
     closeModal('addItemModal');
     
     alert('物品添加成功！');
+}
+
+// 确认删除物品
+function confirmDeleteItem(itemId) {
+    if (!currentDorm || !currentDorm.publicItems) return;
+    
+    const item = currentDorm.publicItems.find(i => i.id === itemId);
+    if (!item) return;
+    
+    // 创建确认模态框
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-overlay';
+    modal.id = 'confirmDeleteModal';
+    
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div class="flex justify-between items-center border-b px-6 py-4">
+                <h3 class="text-lg font-semibold text-gray-900">确认删除</h3>
+                <button onclick="closeModal('confirmDeleteModal')" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-4">
+                <p class="text-gray-700 mb-4">确定要删除物品 "${item.name}" 吗？此操作不可撤销。</p>
+                <div class="flex items-center justify-end">
+                    <button onclick="closeModal('confirmDeleteModal')" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
+                        取消
+                    </button>
+                    <button onclick="deleteItem('${itemId}')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+// 删除物品
+function deleteItem(itemId) {
+    if (!currentDorm || !currentDorm.publicItems) return;
+    
+    const itemIndex = currentDorm.publicItems.findIndex(i => i.id === itemId);
+    if (itemIndex === -1) return;
+    
+    // 从列表中删除物品
+    currentDorm.publicItems.splice(itemIndex, 1);
+    
+    // 更新全局数据
+    const dormIndex = dorms.findIndex(d => d.id === currentDorm.id);
+    if (dormIndex !== -1) {
+        dorms[dormIndex].publicItems = currentDorm.publicItems;
+    }
+    
+    // 更新 mockDorms 数据
+    const mockDormIndex = mockDorms.findIndex(d => d.id === currentDorm.id);
+    if (mockDormIndex !== -1) {
+        mockDorms[mockDormIndex].publicItems = currentDorm.publicItems;
+    }
+    
+    // 更新当前公物列表
+    currentPublicItems = currentDorm.publicItems;
+    
+    // 关闭所有相关模态框
+    closeModal('confirmDeleteModal');
+    closeModal('itemDetailsModal');
+    
+    // 刷新公物列表
+    renderPublicItemsList();
+    
+    alert('物品已删除');
+}
+
+// 显示物品详情模态框
+function showItemDetails(itemId) {
+    if (!currentDorm || !currentDorm.publicItems) return;
+    
+    // 查找物品
+    const item = currentDorm.publicItems.find(item => item.id === itemId);
+    if (!item) return;
+    
+    // 创建模态框
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-overlay';
+    modal.id = 'itemDetailsModal';
+    
+    // 准备物品状态显示
+    let statusText = '未知';
+    let statusClass = 'bg-gray-100 text-gray-800';
+    
+    switch(item.status) {
+        case 'new':
+            statusText = '全新';
+            statusClass = 'bg-green-100 text-green-800';
+            break;
+        case 'good':
+            statusText = '良好';
+            statusClass = 'bg-blue-100 text-blue-800';
+            break;
+        case 'normal':
+            statusText = '一般';
+            statusClass = 'bg-yellow-100 text-yellow-800';
+            break;
+        case 'poor':
+            statusText = '较差';
+            statusClass = 'bg-red-100 text-red-800';
+            break;
+    }
+    
+    // 准备照片显示
+    const photoHTML = item.photo ? 
+        `<div class="mt-4">
+            <img src="${item.photo}" alt="${item.name}" class="w-full h-auto rounded-lg cursor-pointer" onclick="showFullSizeImage('${item.photo}', '${item.name}')">
+            <p class="text-sm text-gray-500 mt-1">点击图片可查看大图</p>
+         </div>` : 
+        `<div class="mt-4 bg-gray-100 rounded-lg p-8 flex items-center justify-center">
+            <p class="text-gray-500">暂无物品照片</p>
+         </div>`;
+    
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg">
+            <div class="flex justify-between items-center border-b px-6 py-4">
+                <h3 class="text-lg font-semibold text-gray-900">物品详情</h3>
+                <button onclick="closeModal('itemDetailsModal')" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="px-6 py-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="text-xl font-bold text-gray-800">${item.name}</h4>
+                        <p class="text-gray-600">价格: ¥${item.price.toFixed(2)}</p>
+                        <p class="text-gray-600">购买日期: ${item.purchaseDate || '未知'}</p>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
+                        ${statusText}
+                    </span>
+                </div>
+                ${photoHTML}
+                <div class="mt-6 flex justify-between">
+                    <div>
+                        <button onclick="showUpdateItemModal('${item.id}')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
+                            <i class="fas fa-edit mr-1"></i> 编辑物品
+                        </button>
+                        ${currentDorm.isAdmin ? `
+                        <button onclick="deletePublicItem('${item.id}')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            <i class="fas fa-trash-alt mr-1"></i> 删除
+                        </button>
+                        ` : ''}
+                    </div>
+                    <button onclick="closeModal('itemDetailsModal')" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        关闭
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+// 显示公物管理标签页
+function showPublicItemsTab() {
+    initPublicItemsSystem();
+    renderPublicItemsList();
 }
