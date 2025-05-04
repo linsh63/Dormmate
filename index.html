@@ -6,6 +6,7 @@
     <title>Dormmate - 宿舍管理系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="publicItems.js" defer></script>
+    <script src="lifeRecords.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .dorm-card {
@@ -331,6 +332,10 @@
                                 <button onclick="showDormTab('shared-files'); showSharedFilesTab();" class="pb-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 tab-btn" data-tab="shared-files">
                                     共享文件夹
                                 </button>
+                                <!-- 添加生活记录标签页按钮 -->
+                                <button onclick="showDormTab('life-records'); showLifeRecordsTab();" class="pb-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 tab-btn" data-tab="life-records">
+                                    生活记录
+                                </button>
                                 <button onclick="showDormTab('settings')" id="settings-tab" class="pb-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 tab-btn hidden" data-tab="settings">
                                     宿舍设置
                                 </button>
@@ -456,6 +461,42 @@
                                 
                                 <!-- 文件列表容器 -->
                                 <div id="shared-files-container" class="mt-4"></div>
+                            </div>
+                        </div>
+
+                        <!-- 在其他标签页内容后面添加生活记录标签页内容 -->
+                        <div id="life-records-tab" class="mt-6 hidden">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-lg font-medium text-gray-900">生活记录</h3>
+                                <div class="flex space-x-2">
+                                    <div class="flex rounded-md shadow-sm" role="group">
+                                        <button id="grid-mode-btn" onclick="changeDisplayMode('grid')" class="display-mode-btn bg-indigo-600 text-white px-3 py-1 text-sm font-medium rounded-l-md">
+                                            <i class="fas fa-th-large mr-1"></i> 网格
+                                        </button>
+                                        <button id="wall-mode-btn" onclick="changeDisplayMode('wall')" class="display-mode-btn bg-white text-gray-700 px-3 py-1 text-sm font-medium">
+                                            <i class="fas fa-th mr-1"></i> 照片墙
+                                        </button>
+                                        <button id="timeline-mode-btn" onclick="changeDisplayMode('timeline')" class="display-mode-btn bg-white text-gray-700 px-3 py-1 text-sm font-medium rounded-r-md">
+                                            <i class="fas fa-stream mr-1"></i> 时间线
+                                        </button>
+                                    </div>
+                                    <button onclick="showAddRecordModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md text-sm font-medium">
+                                        <i class="fas fa-plus mr-1"></i> 添加记录
+                                    </button>
+                                    <button onclick="createVideoCollection()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm font-medium">
+                                        <i class="fas fa-film mr-1"></i> 创建视频合集
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-lg shadow p-4">
+                                <div class="text-sm text-gray-600 mb-4">
+                                    <p>在这里记录宿舍生活的精彩瞬间，上传图片、视频或文字记录，与舍友分享美好回忆。</p>
+                                </div>
+                                
+                                <div id="life-records-list" class="mt-4">
+                                    <!-- 生活记录列表将在这里渲染 -->
+                                </div>
                             </div>
                         </div>
                         

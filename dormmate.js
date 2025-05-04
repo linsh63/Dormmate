@@ -131,6 +131,50 @@ function init() {
     });
 
     updateAccountDropdown();
+    
+    // 如果当前用户已登录并且有宿舍，初始化宿舍管理视图
+    if (currentUser && currentUser.dormId) {
+        // 查找用户的宿舍
+        currentDorm = dorms.find(dorm => dorm.id === currentUser.dormId);
+        
+        if (currentDorm) {
+            // 检查用户是否是管理员
+            currentDorm.isAdmin = currentDorm.adminId === currentUser.id;
+            
+            // 显示宿舍管理视图
+            showView('dormManagementView');
+            
+            // 更新宿舍信息
+            updateDormInfo();
+            
+            // 更新成员列表
+            updateMembersList();
+            
+            // 更新经费信息
+            updateFundsInfo();
+            
+            // 更新经费历史
+            updateFundsHistory();
+            
+            // 更新申请列表
+            updateRequestsList();
+            
+            // 更新公物列表
+            updatePublicItemsList();
+            
+            // 初始化共享文件夹
+            initSharedFilesSystem();
+            
+            // 初始化生活记录系统
+            initLifeRecordsSystem();
+        } else {
+            // 如果找不到宿舍，显示创建宿舍视图
+            showView('createDormView');
+        }
+    } else {
+        // 如果用户未登录，显示登录视图
+        showView('loginView');
+    }
 }
 
 // 加载用户的宿舍
@@ -378,6 +422,17 @@ function showDormTab(tabName) {
     if (tabName === 'public-items') {
         showPublicItemsTab();
     }
+    
+    // 在这里添加：如果是生活记录标签页，初始化生活记录系统
+    if (tabName === 'life-records') {
+        showLifeRecordsTab();
+    }
+}
+
+// 在 showPublicItemsTab 函数之后添加
+function showLifeRecordsTab() {
+    // 初始化生活记录系统
+    initLifeRecordsSystem();
 }
 
 // 返回上一层文件夹
@@ -423,7 +478,8 @@ function createDorm() {
         fundsHistory: [],
         requests: [],
         // 添加空的公物列表
-        publicItems: []
+        publicItems: [],
+        lifeRecords: []
     };
     
     // 添加到mock数据
