@@ -537,7 +537,7 @@ function showSceneReconstructionTab() {
                     <div class="mb-4">
                         <i class="fas fa-cube text-4xl text-gray-400"></i>
                     </div>
-                    <h4 class="text-lg font-medium text-gray-800 mb-2">还没有创建场景</h4>
+                    <h4 class="text-lg font-medium text-gray-800 mb-2">还没有创建场景（该功能未实现，输出仅为示例）</h4>
                     <p class="text-sm text-gray-600 mb-4">通过上传照片和提供房间信息，创建宿舍的3D场景模型</p>
                     <button onclick="showSceneReconstructionWizard()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">
                         开始创建
