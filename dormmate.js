@@ -393,6 +393,7 @@ function showDormView(dormId) {
 }
 
 // 显示宿舍标签页
+// 显示宿舍标签页
 function showDormTab(tabName) {
     // 隐藏所有标签页
     document.querySelectorAll('[id$="-tab"]').forEach(tab => {
@@ -427,12 +428,557 @@ function showDormTab(tabName) {
     if (tabName === 'life-records') {
         showLifeRecordsTab();
     }
+    
+    // 添加：如果是场景重建标签页，初始化场景重建系统
+    if (tabName === 'scene-reconstruction') {
+        showSceneReconstructionTab();
+    }
 }
 
 // 在 showPublicItemsTab 函数之后添加
 function showLifeRecordsTab() {
     // 初始化生活记录系统
     initLifeRecordsSystem();
+}
+
+// 在 showLifeRecordsTab 函数之后添加
+function showSceneReconstructionTab() {
+    console.log('显示场景重建标签页');
+    
+    // 检查当前宿舍是否存在
+    if (!currentDorm) {
+        console.error('当前没有选中的宿舍');
+        return;
+    }
+    
+    // 获取场景重建容器
+    const container = document.getElementById('scene-reconstruction-container');
+    if (!container) {
+        console.error('场景重建容器不存在');
+        return;
+    }
+    
+    // 检查宿舍是否已有场景数据
+    if (currentDorm.sceneData) {
+        console.log('宿舍已有场景数据，显示现有场景');
+        
+        // 设置全局场景数据
+        window.sceneData = currentDorm.sceneData;
+        
+        // 渲染现有场景
+        container.innerHTML = `
+            <div class="bg-white rounded-lg shadow p-4 mb-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-medium text-gray-800">宿舍3D场景</h3>
+                    <div class="flex space-x-2">
+                        <button onclick="editScene()" class="px-3 py-1 bg-indigo-500 text-white rounded-md hover:bg-indigo-600">
+                            <i class="fas fa-edit mr-1"></i> 编辑
+                        </button>
+                        <button onclick="shareScene()" class="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600">
+                            <i class="fas fa-share-alt mr-1"></i> 分享
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-4 mb-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="text-md font-medium text-gray-800">场景预览</h4>
+                    <div class="flex space-x-2">
+                        <button onclick="zoomIn()" class="px-2 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        <button onclick="zoomOut()" class="px-2 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                            <i class="fas fa-search-minus"></i>
+                        </button>
+                        <button onclick="resetView()" class="px-2 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="scene-canvas-container" class="w-full h-96 bg-gray-100 rounded-lg relative">
+                    <canvas id="scene-canvas" class="w-full h-full"></canvas>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-4">
+                <h4 class="text-md font-medium text-gray-800 mb-3">场景物品列表</h4>
+                <div id="scene-items-list" class="space-y-2">
+                    <!-- 物品列表将在这里显示 -->
+                </div>
+            </div>
+        `;
+        
+        // 初始化Three.js场景
+        setTimeout(() => {
+            if (typeof initializeThreeJS === 'function') {
+                console.log('初始化Three.js场景');
+                initializeThreeJS();
+                
+                // 渲染场景物品列表
+                if (typeof renderSceneItemsList === 'function') {
+                    renderSceneItemsList();
+                }
+            } else {
+                console.error('initializeThreeJS函数未定义');
+                document.getElementById('scene-canvas-container').innerHTML = `
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <p class="text-red-500">无法加载3D场景，请确保Three.js库已正确加载</p>
+                    </div>
+                `;
+            }
+        }, 500); // 延迟一点时间确保DOM已完全加载
+    } else {
+        console.log('宿舍没有场景数据，显示默认界面');
+        // 显示一个简单的提示
+        container.innerHTML = `
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="text-center py-8">
+                    <div class="mb-4">
+                        <i class="fas fa-cube text-4xl text-gray-400"></i>
+                    </div>
+                    <h4 class="text-lg font-medium text-gray-800 mb-2">还没有创建场景</h4>
+                    <p class="text-sm text-gray-600 mb-4">通过上传照片和提供房间信息，创建宿舍的3D场景模型</p>
+                    <button onclick="showSceneReconstructionWizard()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                        开始创建
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// 添加渲染现有场景的函数
+function renderExistingScene(container) {
+    // 清空容器
+    container.innerHTML = '';
+    
+    // 创建场景控制界面
+    const controlsDiv = document.createElement('div');
+    controlsDiv.className = 'bg-white rounded-lg shadow p-4 mb-4';
+    controlsDiv.innerHTML = `
+        <div class="flex justify-between items-center">
+            <h3 class="text-lg font-medium text-gray-800">宿舍3D场景</h3>
+            <div class="flex space-x-2">
+                <button onclick="editScene()" class="px-3 py-1 bg-indigo-500 text-white rounded-md hover:bg-indigo-600">
+                    <i class="fas fa-edit mr-1"></i> 编辑
+                </button>
+                <button onclick="shareScene()" class="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600">
+                    <i class="fas fa-share-alt mr-1"></i> 分享
+                </button>
+            </div>
+        </div>
+    `;
+    container.appendChild(controlsDiv);
+    
+    // 创建场景视图容器
+    const sceneViewDiv = document.createElement('div');
+    sceneViewDiv.className = 'bg-white rounded-lg shadow p-4 mb-4';
+    sceneViewDiv.innerHTML = `
+        <div class="flex justify-between items-center mb-3">
+            <h4 class="text-md font-medium text-gray-800">场景预览</h4>
+            <div class="flex space-x-2">
+                <button onclick="zoomIn()" class="px-2 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+                <button onclick="zoomOut()" class="px-2 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+                <button onclick="resetView()" class="px-2 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </div>
+        <div id="scene-canvas-container" class="w-full h-96 bg-gray-100 rounded-lg relative">
+            <canvas id="scene-canvas" class="w-full h-full"></canvas>
+        </div>
+    `;
+    container.appendChild(sceneViewDiv);
+    
+    // 创建场景物品列表
+    const itemsListDiv = document.createElement('div');
+    itemsListDiv.className = 'bg-white rounded-lg shadow p-4';
+    itemsListDiv.innerHTML = `
+        <h4 class="text-md font-medium text-gray-800 mb-3">场景物品列表</h4>
+        <div id="scene-items-list" class="space-y-2">
+            <!-- 物品列表将在这里显示 -->
+        </div>
+    `;
+    container.appendChild(itemsListDiv);
+    
+    // 初始化Three.js场景
+    setTimeout(() => {
+        if (typeof initializeThreeJS === 'function') {
+            console.log('初始化Three.js场景');
+            initializeThreeJS();
+            
+            // 渲染场景物品列表
+            if (typeof renderSceneItemsList === 'function') {
+                renderSceneItemsList();
+            }
+        } else {
+            console.error('initializeThreeJS函数未定义');
+            document.getElementById('scene-canvas-container').innerHTML = `
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <p class="text-red-500">无法加载3D场景，请确保Three.js库已正确加载</p>
+                </div>
+            `;
+        }
+    }, 500); // 延迟一点时间确保DOM已完全加载
+}
+
+// 添加一个临时的函数，用于显示场景重建向导
+function showSceneReconstructionWizard() {
+    // 检查是否已加载场景重建函数
+    if (typeof showSceneWizard === 'function') {
+        showSceneWizard();
+    } else {
+        // 如果函数未定义，尝试定义一个基本的场景向导函数
+        window.showSceneWizard = function() {
+            // 创建模态框
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center modal-overlay';
+            modal.id = 'sceneWizardModal';
+            
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+                    <div class="flex justify-between items-center border-b px-6 py-4">
+                        <h3 class="text-lg font-semibold text-gray-900">创建宿舍3D场景</h3>
+                        <button onclick="closeModal('sceneWizardModal')" class="text-gray-400 hover:text-gray-500">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="px-6 py-4">
+                        <!-- 步骤指示器 -->
+                        <div class="flex items-center mb-8">
+                            <div class="flex items-center relative">
+                                <div class="rounded-full h-8 w-8 flex items-center justify-center border-2 border-indigo-600 bg-indigo-600 text-white">1</div>
+                                <div class="text-sm font-medium text-indigo-600 mt-1">房间信息</div>
+                            </div>
+                            <div class="flex-auto border-t-2 border-indigo-600"></div>
+                            <div class="flex items-center relative">
+                                <div class="rounded-full h-8 w-8 flex items-center justify-center border-2 border-gray-300 text-gray-400">2</div>
+                                <div class="text-sm font-medium text-gray-500 mt-1">上传照片</div>
+                            </div>
+                            <div class="flex-auto border-t-2 border-gray-300"></div>
+                            <div class="flex items-center relative">
+                                <div class="rounded-full h-8 w-8 flex items-center justify-center border-2 border-gray-300 text-gray-400">3</div>
+                                <div class="text-sm font-medium text-gray-500 mt-1">添加物品</div>
+                            </div>
+                            <div class="flex-auto border-t-2 border-gray-300"></div>
+                            <div class="flex items-center relative">
+                                <div class="rounded-full h-8 w-8 flex items-center justify-center border-2 border-gray-300 text-gray-400">4</div>
+                                <div class="text-sm font-medium text-gray-500 mt-1">完成</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 步骤内容 -->
+                        <div id="step-1" class="mb-6">
+                            <h4 class="text-md font-medium text-gray-800 mb-4">输入房间基本信息</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2" for="room-length">房间长度 (米)</label>
+                                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="room-length" type="number" min="1" step="0.1" value="4">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2" for="room-width">房间宽度 (米)</label>
+                                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="room-width" type="number" min="1" step="0.1" value="3">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2" for="room-height">房间高度 (米)</label>
+                                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="room-height" type="number" min="1" step="0.1" value="2.8">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2" for="room-style">房间风格</label>
+                                    <select class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="room-style">
+                                        <option value="dormitory">宿舍</option>
+                                        <option value="apartment">公寓</option>
+                                        <option value="studio">工作室</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2" for="wall-color">墙面颜色</label>
+                                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="wall-color" type="color" value="#F5F5F5">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2" for="floor-type">地板类型</label>
+                                    <select class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="floor-type">
+                                        <option value="wood">木地板</option>
+                                        <option value="tile">瓷砖</option>
+                                        <option value="carpet">地毯</option>
+                                        <option value="concrete">水泥</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="step-2" class="mb-6 hidden">
+                            <h4 class="text-md font-medium text-gray-800 mb-4">上传房间照片（可选）</h4>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                                <div class="mb-4">
+                                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-4">拖放照片到这里，或点击上传</p>
+                                <input type="file" id="room-photos" multiple accept="image/*" class="hidden" onchange="handlePhotoUpload(event)">
+                                <button onclick="document.getElementById('room-photos').click()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                                    选择照片
+                                </button>
+                            </div>
+                            <div id="uploaded-photos" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                                <!-- 上传的照片将显示在这里 -->
+                            </div>
+                            <div class="mt-4">
+                                <p class="text-sm text-gray-600 mb-2">已上传 <span id="photo-count">0</span> 张照片</p>
+                                <div class="flex items-center">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div id="upload-progress" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                    <span id="upload-percentage" class="text-sm text-gray-600 ml-2">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="step-3" class="mb-6 hidden">
+                            <h4 class="text-md font-medium text-gray-800 mb-4">添加房间物品</h4>
+                            <div class="mb-4">
+                                <button onclick="showAddItemModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                                    <i class="fas fa-plus mr-1"></i> 添加物品
+                                </button>
+                            </div>
+                            <div class="border rounded-lg p-4 bg-gray-50">
+                                <h5 class="text-sm font-medium text-gray-700 mb-3">已添加物品</h5>
+                                <div id="added-items-list" class="space-y-2">
+                                    <!-- 添加的物品将显示在这里 -->
+                                </div>
+                                <p id="no-added-items-message" class="text-gray-500 text-center py-4">暂无添加物品</p>
+                            </div>
+                        </div>
+                        
+                        <div id="step-4" class="mb-6 hidden">
+                            <h4 class="text-md font-medium text-gray-800 mb-4">预览场景</h4>
+                            <div id="preview-canvas-container" class="w-full h-64 bg-gray-100 rounded-lg mb-4">
+                                <!-- 预览画布将在这里显示 -->
+                            </div>
+                            <div class="text-center">
+                                <p class="text-green-600 mb-2"><i class="fas fa-check-circle mr-1"></i> 场景创建完成！</p>
+                                <p class="text-sm text-gray-600 mb-4">您可以点击"完成"按钮保存场景</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 步骤导航按钮 -->
+                        <div class="flex justify-between mt-6">
+                            <button id="prev-btn" onclick="prevStep()" class="bg-gray-500 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium hidden">
+                                <i class="fas fa-arrow-left mr-1"></i> 上一步
+                            </button>
+                            <button id="next-btn" onclick="nextStep()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                                下一步 <i class="fas fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 初始化步骤
+            window.currentStep = 1;
+            window.totalSteps = 4;
+            
+            // 初始化临时物品数组和照片数组
+            window.tempSceneItems = [];
+            window.uploadedPhotos = [];
+            
+            // 添加拖放上传功能
+            const dropZone = modal.querySelector('.border-dashed');
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-indigo-500', 'bg-indigo-50');
+            });
+            
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+                
+                if (e.dataTransfer.files.length > 0) {
+                    handlePhotoUpload({ target: { files: e.dataTransfer.files } });
+                }
+            });
+        };
+        
+        // 定义处理照片上传的函数
+        window.handlePhotoUpload = function(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            
+            const uploadedPhotosContainer = document.getElementById('uploaded-photos');
+            const photoCountElement = document.getElementById('photo-count');
+            const uploadProgressBar = document.getElementById('upload-progress');
+            const uploadPercentage = document.getElementById('upload-percentage');
+            
+            // 更新进度条
+            let totalFiles = files.length;
+            let loadedFiles = 0;
+            
+            // 清空之前的照片（如果需要）
+            // uploadedPhotosContainer.innerHTML = '';
+            
+            // 处理每个文件
+            Array.from(files).forEach((file, index) => {
+                if (!file.type.startsWith('image/')) return;
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    // 创建照片预览
+                    const photoDiv = document.createElement('div');
+                    photoDiv.className = 'relative';
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'w-full h-32 object-cover rounded-lg';
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center';
+                    deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    deleteBtn.onclick = function() {
+                        // 从DOM和数组中移除照片
+                        photoDiv.remove();
+                        const photoIndex = window.uploadedPhotos.findIndex(p => p.src === e.target.result);
+                        if (photoIndex !== -1) {
+                            window.uploadedPhotos.splice(photoIndex, 1);
+                        }
+                        
+                        // 更新计数
+                        photoCountElement.textContent = window.uploadedPhotos.length;
+                    };
+                    
+                    photoDiv.appendChild(img);
+                    photoDiv.appendChild(deleteBtn);
+                    uploadedPhotosContainer.appendChild(photoDiv);
+                    
+                    // 保存照片数据
+                    window.uploadedPhotos.push({
+                        src: e.target.result,
+                        file: file
+                    });
+                    
+                    // 更新进度
+                    loadedFiles++;
+                    const progress = Math.round((loadedFiles / totalFiles) * 100);
+                    uploadProgressBar.style.width = `${progress}%`;
+                    uploadPercentage.textContent = `${progress}%`;
+                    
+                    // 更新计数
+                    photoCountElement.textContent = window.uploadedPhotos.length;
+                };
+                
+                reader.readAsDataURL(file);
+            });
+        };
+        
+        // 添加步骤导航函数
+        window.prevStep = function() {
+            if (window.currentStep > 1) {
+                // 隐藏当前步骤
+                document.getElementById(`step-${window.currentStep}`).classList.add('hidden');
+                
+                // 显示上一步
+                window.currentStep--;
+                document.getElementById(`step-${window.currentStep}`).classList.remove('hidden');
+                
+                // 更新步骤指示器
+                updateStepIndicator();
+                
+                // 如果是第一步，隐藏上一步按钮
+                if (window.currentStep === 1) {
+                    document.getElementById('prev-btn').classList.add('hidden');
+                }
+                
+                // 显示下一步按钮
+                document.getElementById('next-btn').textContent = '下一步';
+                document.getElementById('next-btn').innerHTML = '下一步 <i class="fas fa-arrow-right ml-1"></i>';
+            }
+        };
+        
+        window.nextStep = function() {
+            if (window.currentStep < window.totalSteps) {
+                // 隐藏当前步骤
+                document.getElementById(`step-${window.currentStep}`).classList.add('hidden');
+                
+                // 显示下一步
+                window.currentStep++;
+                document.getElementById(`step-${window.currentStep}`).classList.remove('hidden');
+                
+                // 更新步骤指示器
+                updateStepIndicator();
+                
+                // 显示上一步按钮
+                document.getElementById('prev-btn').classList.remove('hidden');
+                
+                // 如果是最后一步，更改下一步按钮文本
+                if (window.currentStep === window.totalSteps) {
+                    document.getElementById('next-btn').textContent = '完成';
+                    document.getElementById('next-btn').innerHTML = '完成 <i class="fas fa-check ml-1"></i>';
+                }
+                
+                // 如果是第三步（添加物品），初始化物品列表
+                if (window.currentStep === 3) {
+                    initItemsList();
+                }
+                
+                // 如果是第四步（预览），初始化预览
+                if (window.currentStep === 4) {
+                    initScenePreview();
+                }
+            } else {
+                // 完成场景创建
+                finishSceneCreation();
+            }
+        };
+        
+        window.updateStepIndicator = function() {
+            // 更新步骤指示器
+            const steps = document.querySelectorAll('.flex.items-center.relative');
+            const lines = document.querySelectorAll('.flex-auto.border-t-2');
+            
+            steps.forEach((step, index) => {
+                const stepNumber = index + 1;
+                const circle = step.querySelector('div:first-child');
+                const text = step.querySelector('div:last-child');
+                
+                if (stepNumber < window.currentStep) {
+                    // 已完成的步骤
+                    circle.className = 'rounded-full h-8 w-8 flex items-center justify-center border-2 border-indigo-600 bg-indigo-600 text-white';
+                    text.className = 'text-sm font-medium text-indigo-600 mt-1';
+                } else if (stepNumber === window.currentStep) {
+                    // 当前步骤
+                    circle.className = 'rounded-full h-8 w-8 flex items-center justify-center border-2 border-indigo-600 bg-indigo-600 text-white';
+                    text.className = 'text-sm font-medium text-indigo-600 mt-1';
+                } else {
+                    // 未完成的步骤
+                    circle.className = 'rounded-full h-8 w-8 flex items-center justify-center border-2 border-gray-300 text-gray-400';
+                    text.className = 'text-sm font-medium text-gray-500 mt-1';
+                }
+            });
+            
+            lines.forEach((line, index) => {
+                if (index < window.currentStep - 1) {
+                    // 已完成步骤之间的线
+                    line.className = 'flex-auto border-t-2 border-indigo-600';
+                } else {
+                    // 未完成步骤之间的线
+                    line.className = 'flex-auto border-t-2 border-gray-300';
+                }
+            });
+        };
+        
+        // 调用刚定义的函数
+        window.showSceneWizard();
+    }
 }
 
 // 返回上一层文件夹

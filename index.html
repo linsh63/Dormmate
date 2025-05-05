@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dormmate - 宿舍管理系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
     <script src="publicItems.js" defer></script>
     <script src="lifeRecords.js" defer></script>
+    <script src="sceneReconstruction.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .dorm-card {
@@ -336,6 +339,9 @@
                                 <button onclick="showDormTab('life-records'); showLifeRecordsTab();" class="pb-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 tab-btn" data-tab="life-records">
                                     生活记录
                                 </button>
+                                <button onclick="showDormTab('scene-reconstruction'); showSceneReconstructionTab();" class="pb-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 tab-btn" data-tab="scene-reconstruction">
+                                    场景重建
+                                </button>
                                 <button onclick="showDormTab('settings')" id="settings-tab" class="pb-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 tab-btn hidden" data-tab="settings">
                                     宿舍设置
                                 </button>
@@ -500,6 +506,13 @@
                             </div>
                         </div>
                         
+                        <!-- 添加场景重建标签页内容 -->
+                        <div id="scene-reconstruction-tab" class="mt-6 hidden">
+                            <div id="scene-reconstruction-container">
+                                <!-- 场景重建UI将在这里渲染 -->
+                            </div>
+                        </div>
+
                         <!-- Settings Tab -->
                         <div id="settings-tab" class="mt-6 hidden">
                             <div class="bg-white rounded-lg border p-4 mb-6">
@@ -608,5 +621,7 @@
     <script src="dormmate.js"></script>
     <script src="publicItems.js"></script>
     <script src="sharedFiles.js"></script>
+    <script src="lifeRecords.js"></script>
+    <script src="sceneReconstruction.js"></script>
 </body>
 </html>
